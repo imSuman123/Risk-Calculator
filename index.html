@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Risk-Reward Calculator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            /* Premium Dark Palette */
+            --bg-gradient: linear-gradient(135deg, #0b0f19 0%, #171e2e 100%);
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: 1px solid rgba(250, 243, 225, 0.08);
+
+            /* Typography Colors */
+            --text-primary: #FAF3E1;
+            --text-secondary: rgba(250, 243, 225, 0.6);
+            --text-muted: rgba(250, 243, 225, 0.3);
+
+            /* Accents */
+            --accent-color: #6366f1;
+            /* Indigo-ish */
+            --accent-glow: 0 0 20px rgba(99, 102, 241, 0.4);
+            --success-color: #34d399;
+            --danger-color: #f87171;
+
+            /* Fonts */
+            --font-main: 'Inter', sans-serif;
+            --font-display: 'Outfit', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px 0 40px;
+            font-family: var(--font-main);
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            -webkit-font-smoothing: antialiased;
+        }
+
+
+
+
+        h1 {
+            grid-column: 1 / -1;
+            text-align: center;
+            /* Center align */
+            font-family: var(--font-display);
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(to right, #FAF3E1, #6366f1);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.5rem;
+            letter-spacing: -0.02em;
+            text-transform: uppercase;
+            padding-left: 0;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: var(--card-border);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            box-sizing: border-box;
+        }
+
+        .card.controls {
+            flex: 1;
+        }
+
+        .card.output {
+            flex: 1;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            border-color: rgba(250, 243, 225, 0.15);
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            /* Smaller title */
+            margin-bottom: 4px;
+            /* Tighter */
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 700;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 4px;
+            /* Tighter */
+        }
+
+        /* Input Styles */
+        .input-group {
+            margin-bottom: 16px;
+            /* Utilize vertical space */
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-family: var(--font-main);
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+        }
+
+        .prefix-text {
+            position: absolute;
+            left: 12px;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .prefix-text+input[type="number"] {
+            padding-left: 32px !important;
+            text-align: left;
+        }
+
+        .suffix-text {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-left: -8px;
+        }
+
+        input[type="number"] {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(250, 243, 225, 0.1);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: var(--text-primary);
+            width: 120px;
+            font-family: var(--font-main);
+            font-weight: 600;
+            text-align: center;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            background: rgba(250, 243, 225, 0.05);
+        }
+
+        input[type="range"] {
+            flex-grow: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            background: rgba(250, 243, 225, 0.1);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            /* Smaller thumb */
+            height: 16px;
+            background: var(--text-primary);
+            border: 2px solid var(--card-bg);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: var(--accent-color);
+        }
+
+        button#reset-btn,
+        button#reset-cons-btn {
+            background: rgba(250, 243, 225, 0.05);
+            /* Match existing color */
+            color: var(--text-primary);
+            border: 1px solid var(--card-border);
+            /* Explicit border */
+            padding: 10px;
+            /* Compact button */
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: var(--font-main);
+            margin-top: auto;
+            /* Push to bottom */
+            width: 100%;
+            transition: all 0.2s;
+            letter-spacing: 0.02em;
+        }
+
+        button#reset-btn:hover,
+        button#reset-cons-btn:hover {
+            background: rgba(250, 243, 225, 0.1);
+            transform: translateY(-1px);
+            border-color: rgba(250, 243, 225, 0.3);
+        }
+
+        /* Results Styles - Compact Grid */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            /* 4 columns on desktop for compactness */
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .results-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .result-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 12px;
+            /* Very compact */
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(250, 243, 225, 0.03);
+            transition: background 0.2s;
+        }
+
+        .result-item:hover {
+            background: rgba(250, 243, 225, 0.03);
+        }
+
+        .result-label {
+            font-size: 0.65rem;
+            /* Tiny label */
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .result-value {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            /* Smaller value */
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .val-green {
+            color: var(--success-color);
+            text-shadow: 0 0 15px rgba(52, 211, 153, 0.2);
+        }
+
+        .val-red {
+            color: var(--danger-color);
+            text-shadow: 0 0 15px rgba(248, 113, 113, 0.2);
+        }
+
+        #res-net-pnl {
+            font-size: 1.5rem !important;
+            /* Keep PnL slightly larger but smaller than before */
+        }
+
+        /* Chart Canvas */
+        .chart-container {
+            width: 100%;
+            height: 120px;
+            position: relative;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 6px;
+            border: 1px solid rgba(250, 243, 225, 0.05);
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* App Layout */
+
+        .app-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto 1fr;
+            gap: 8px 40px;
+            max-width: 1100px;
+            width: 95%;
+            position: relative;
+        }
+
+        .app-layout::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: linear-gradient(to bottom,
+                    transparent,
+                    rgba(250, 243, 225, 0.15) 15%,
+                    rgba(250, 243, 225, 0.15) 85%,
+                    transparent);
+        }
+
+        .tool-container {
+            display: grid;
+            grid-template-rows: subgrid;
+            grid-row: span 3;
+            gap: 8px;
+        }
+
+        /* Main Container for Inner Cards */
+        .container {
+            display: grid;
+            grid-template-rows: subgrid;
+            grid-row: span 2;
+            gap: 8px;
+        }
+
+        .tool-container h1 {
+            text-align: center;
+            margin-top: 0;
+        }
+
+        /* Consistency Calculator specific styles */
+        #cons-status-card {
+            border: 1px solid var(--danger-color);
+            background: rgba(248, 113, 113, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-layout">
+
+        <!-- TOOL 1: Risk Calculator -->
+        <div class="tool-container">
+            <h1>Risk Calculator</h1>
+
+            <div class="container">
+                <!-- Controls Section -->
+                <div class="card controls">
+                    <h2 class="section-title">Parameters</h2>
+
+                    <div class="input-group">
+                        <label>Risk : Reward (1 : R)</label>
+                        <div class="input-wrapper"><span class="prefix-text">1 :</span><input type="number"
+                                id="rr-input" value="2" min="0.1" step="0.1"><input type="range" id="rr-slider"
+                                min="0.5" max="10" step="0.1" value="2">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Win Rate (%)</label>
+                        <div class="input-wrapper"><input type="number" id="winrate-input" value="50" min="1"
+                                max="100"><input type="range" id="winrate-slider" min="1" max="100" value="50"><span
+                                class="suffix-text">%</span>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Number of Trades</label>
+                        <div class="input-wrapper"><input type="number" id="trades-input" value="100" min="10"
+                                max="1000"><input type="range" id="trades-slider" min="10" max="1000" step="10"
+                                value="100">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Risk per Trade ($)</label>
+                        <div class="input-wrapper"><span class="prefix-text">$</span><input type="number"
+                                id="risk-input" value="100" min="1">
+                            <!-- No slider for money, range is too vast -->
+                        </div>
+                    </div>
+
+                    <button id="reset-btn">Reset Defaults</button>
+                </div>
+
+                <!-- Output Section -->
+                <div class="card output">
+                    <h2 class="section-title">Performance Analytics</h2>
+
+                    <div class="results-grid">
+                        <div class="result-item">
+                            <div class="result-label">Breakeven</div>
+                            <div class="result-value" id="res-breakeven">33.3%</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-label">Wins</div>
+                            <div class="result-value val-green" id="res-wins">50</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-label">Losses</div>
+                            <div class="result-value val-red" id="res-losses">50</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-label">Net R</div>
+                            <div class="result-value" id="res-net-r">50R</div>
+                        </div>
+                    </div>
+
+                    <div class="result-item" style="margin-bottom: 20px;">
+                        <div class="result-label">Net Profit / Loss</div>
+                        <div class="result-value" id="res-net-pnl" style="font-size: 2rem;">$5,000.00</div>
+                    </div>
+
+                    <h2 class="section-title">Equity Curve Simulation</h2>
+                    <div class="chart-container">
+                        <canvas id="equityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOOL 2: Consistency Calculator -->
+        <div class="tool-container">
+            <h1>Consistency Calculator</h1>
+
+            <div class="container container-consistency">
+                <div class="card controls">
+                    <h2 class="section-title">Parameters</h2>
+                    <div class="input-group">
+                        <label>Total Profit Made ($)</label>
+                        <div class="input-wrapper"><span class="prefix-text">$</span><input type="number"
+                                id="total-pnl-input" value="5000" min="1">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Best Day Profit ($)</label>
+                        <div class="input-wrapper"><span class="prefix-text">$</span><input type="number"
+                                id="best-day-input" value="2000" min="1">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Consistency (%)</label>
+                        <div class="input-wrapper"><input type="number" id="rule-percent-input" value="30" min="1"
+                                max="99"><input type="range" id="rule-percent-slider" min="10" max="80" step="5"
+                                value="30"><span class="suffix-text">%</span>
+                        </div>
+                    </div>
+                    <button id="reset-cons-btn">Reset Defaults</button>
+                </div>
+
+                <div class="card output">
+                    <h2 class="section-title">Consistency Status</h2>
+
+                    <div class="result-item" style="margin-bottom: 20px;">
+                        <div class="result-label">Current Weight of Best Day</div>
+                        <div class="result-value" id="cons-current-percent">40.0%</div>
+                    </div>
+
+                    <div class="result-item" id="cons-status-card"
+                        style="margin-bottom: 20px; border: 1px solid var(--danger-color); background: rgba(248, 113, 113, 0.1);">
+                        <div class="result-label" style="opacity: 0.8;">Status</div>
+                        <div class="result-value val-red" id="cons-status-text">VIOLATION</div>
+                    </div>
+
+                    <div id="cons-feedback"
+                        style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
+                        Your best day of <strong>$2,000</strong> is <strong>40%</strong> of your total profit. This
+                        exceeds the 30% limit.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- RISK CALCULATOR LOGIC ---
+        // DOM Elements
+        const inputs = {
+            rr: { num: document.getElementById('rr-input'), slide: document.getElementById('rr-slider') },
+            winrate: { num: document.getElementById('winrate-input'), slide: document.getElementById('winrate-slider') },
+            trades: { num: document.getElementById('trades-input'), slide: document.getElementById('trades-slider') },
+            risk: { num: document.getElementById('risk-input') }
+        };
+
+        const results = {
+            breakeven: document.getElementById('res-breakeven'),
+            wins: document.getElementById('res-wins'),
+            losses: document.getElementById('res-losses'),
+            netR: document.getElementById('res-net-r'),
+            netPnL: document.getElementById('res-net-pnl')
+        };
+
+        const canvas = document.getElementById('equityChart');
+        const ctx = canvas.getContext('2d');
+        const resetBtn = document.getElementById('reset-btn');
+
+        // State
+        let state = {
+            rr: 2,
+            winrate: 50,
+            trades: 100,
+            risk: 100
+        };
+
+        // Initialize
+        function init() {
+            syncInputs();
+            addListeners();
+            resizeCanvas(); // Must resize BEFORE drawing
+            calculateAndDraw();
+            initConsistency();
+
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                drawChart();
+            });
+        }
+
+        // Sync Sliders and Number Inputs
+        function syncInputs() {
+            // RR
+            inputs.rr.slide.addEventListener('input', (e) => {
+                inputs.rr.num.value = e.target.value;
+                state.rr = parseFloat(e.target.value);
+                calculateAndDraw();
+            });
+            inputs.rr.num.addEventListener('input', (e) => {
+                inputs.rr.slide.value = e.target.value;
+                state.rr = parseFloat(e.target.value);
+                calculateAndDraw();
+            });
+
+            // Winrate
+            inputs.winrate.slide.addEventListener('input', (e) => {
+                inputs.winrate.num.value = e.target.value;
+                state.winrate = parseFloat(e.target.value);
+                calculateAndDraw();
+            });
+            inputs.winrate.num.addEventListener('input', (e) => {
+                inputs.winrate.slide.value = e.target.value;
+                state.winrate = parseFloat(e.target.value);
+                calculateAndDraw();
+            });
+
+            // Trades
+            inputs.trades.slide.addEventListener('input', (e) => {
+                inputs.trades.num.value = e.target.value;
+                state.trades = parseInt(e.target.value);
+                calculateAndDraw();
+            });
+            inputs.trades.num.addEventListener('input', (e) => {
+                inputs.trades.slide.value = e.target.value;
+                state.trades = parseInt(e.target.value);
+                calculateAndDraw();
+            });
+
+            // Risk
+            inputs.risk.num.addEventListener('input', (e) => {
+                state.risk = parseFloat(e.target.value);
+                calculateAndDraw();
+            });
+        }
+
+        function addListeners() {
+            resetBtn.addEventListener('click', () => {
+                inputs.rr.num.value = 2; inputs.rr.slide.value = 2;
+                inputs.winrate.num.value = 50; inputs.winrate.slide.value = 50;
+                inputs.trades.num.value = 100; inputs.trades.slide.value = 100;
+                inputs.risk.num.value = 100;
+
+                state = { rr: 2, winrate: 50, trades: 100, risk: 100 };
+                calculateAndDraw();
+            });
+        }
+
+        // Core Calculation
+        function calculateAndDraw() {
+            // 1. Static Calculations
+            // Breakeven Win % = 1 / (1 + R)
+            const breakeven = (1 / (1 + state.rr)) * 100;
+
+            // Expected Wins/Losses (Theoretical)
+            const wins = Math.round(state.trades * (state.winrate / 100));
+            const losses = state.trades - wins;
+
+            // Theoretical Net
+            const netR = (wins * state.rr) - losses;
+            const netPnL = netR * state.risk;
+
+            // Update UI Text
+            results.breakeven.textContent = breakeven.toFixed(1) + "%";
+            results.wins.textContent = wins;
+            results.losses.textContent = losses;
+
+            results.netR.textContent = netR.toFixed(1) + "R";
+            results.netR.className = "result-value " + (netR >= 0 ? "val-green" : "val-red");
+
+            const pnlFormatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(netPnL);
+            results.netPnL.textContent = pnlFormatted;
+            results.netPnL.className = "result-value " + (netPnL >= 0 ? "val-green" : "val-red");
+
+            // 2. Generate Simulation Data
+            const dataPoints = generateEquityCurve();
+            drawChart(dataPoints);
+        }
+
+        function generateEquityCurve() {
+            let equity = 0;
+            const points = [0]; // Start at 0
+
+            for (let i = 0; i < state.trades; i++) {
+                // Monte Carlo Simulation step
+                const isWin = Math.random() * 100 < state.winrate;
+                if (isWin) {
+                    equity += state.rr * state.risk;
+                } else {
+                    equity -= state.risk; // Loss is 1R
+                }
+                points.push(equity);
+            }
+            return points;
+        }
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+
+        // Canvas Drawing
+        function drawChart(data) {
+            if (!data) data = lastData; // Use last cached data if resizing
+            lastData = data; // Cache for resize events
+
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 20;
+
+            // Clear Canvas
+            ctx.clearRect(0, 0, width, height);
+
+            // Find Min/Max for Scaling
+            let min = 0;
+            max = 0;
+            data.forEach(val => {
+                if (val < min) min = val;
+                if (val > max) max = val;
+            });
+
+            // Add some padding to min/max so line isn't on edge
+            const range = max - min || 100; // avoid div by 0
+            const yBuffer = range * 0.1;
+            const yMin = min - yBuffer;
+            const yMax = max + yBuffer;
+            const yRange = yMax - yMin;
+
+            // Coordinate Mapping Functions
+            const getX = (index) => padding + (index / (data.length - 1)) * (width - 2 * padding);
+            const getY = (value) => height - padding - ((value - yMin) / yRange) * (height - 2 * padding);
+
+            // Draw Zero Line (Breakeven)
+            const zeroY = getY(0);
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            ctx.moveTo(padding, zeroY);
+            ctx.lineTo(width - padding, zeroY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw Equity Curve
+            ctx.beginPath();
+            ctx.moveTo(getX(0), getY(data[0]));
+
+            for (let i = 1; i < data.length; i++) {
+                ctx.lineTo(getX(i), getY(data[i]));
+            }
+
+            // Styling based on end result
+            const isProfit = data[data.length - 1] >= 0;
+
+            // Gradient Stroke
+            const gradient = ctx.createLinearGradient(0, 0, width, 0);
+            gradient.addColorStop(0, '#60a5fa'); // Start blue-ish
+            gradient.addColorStop(1, isProfit ? '#10b981' : '#ef4444'); // End Green or Red
+
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 3;
+            ctx.lineJoin = 'round';
+            ctx.shadowColor = isProfit ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)';
+            ctx.shadowBlur = 10;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Fill Area under curve (fade out)
+            ctx.lineTo(getX(data.length - 1), height);
+            ctx.lineTo(getX(0), height);
+            ctx.closePath();
+
+            const fillPattern = ctx.createLinearGradient(0, 0, 0, height);
+            fillPattern.addColorStop(0, isProfit ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)');
+            fillPattern.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+            ctx.fillStyle = fillPattern;
+            ctx.fill();
+        }
+
+        let lastData = [];
+
+        // --- CONSISTENCY CALCULATOR LOGIC ---
+        const consInputs = {
+            total: document.getElementById('total-pnl-input'),
+            best: document.getElementById('best-day-input'),
+            rule: document.getElementById('rule-percent-input'),
+            ruleSlider: document.getElementById('rule-percent-slider')
+        };
+
+        const consResults = {
+            percent: document.getElementById('cons-current-percent'),
+            statusText: document.getElementById('cons-status-text'),
+            statusCard: document.getElementById('cons-status-card'),
+            feedback: document.getElementById('cons-feedback')
+        };
+
+        function initConsistency() {
+            // Sync slider
+            consInputs.rule.addEventListener('input', (e) => {
+                consInputs.ruleSlider.value = e.target.value;
+                calcConsistency();
+            });
+            consInputs.ruleSlider.addEventListener('input', (e) => {
+                consInputs.rule.value = e.target.value;
+                calcConsistency();
+            });
+
+            consInputs.total.addEventListener('input', calcConsistency);
+            consInputs.best.addEventListener('input', calcConsistency);
+
+            document.getElementById('reset-cons-btn').addEventListener('click', () => {
+                consInputs.total.value = 5000;
+                consInputs.best.value = 2000;
+                consInputs.rule.value = 30; consInputs.ruleSlider.value = 30;
+                calcConsistency();
+            });
+
+            calcConsistency();
+        }
+
+        function calcConsistency() {
+            const total = parseFloat(consInputs.total.value) || 0;
+            const best = parseFloat(consInputs.best.value) || 0;
+            const rule = parseFloat(consInputs.rule.value) || 30;
+
+            if (total <= 0) {
+                consResults.percent.textContent = "0%";
+                consResults.statusText.textContent = "WAITING";
+                consResults.statusText.className = "result-value";
+                consResults.statusCard.style.borderColor = "var(--card-border)";
+                consResults.statusCard.style.background = "transparent";
+                consResults.feedback.textContent = "Enter a positive Total Profit to calculate.";
+                return;
+            }
+
+            const currentPercent = (best / total) * 100;
+            consResults.percent.textContent = currentPercent.toFixed(1) + "%";
+            consResults.percent.className = "result-value " + (currentPercent <= rule ? "val-green" : "val-red");
+
+            const maxAllowed = total * (rule / 100);
+
+            if (currentPercent <= rule) {
+                // PASS
+                consResults.statusText.textContent = "PASSED";
+                consResults.statusText.className = "result-value val-green";
+                consResults.statusCard.style.borderColor = "var(--success-color)";
+                consResults.statusCard.style.background = "rgba(52, 211, 153, 0.1)";
+
+                consResults.feedback.innerHTML = `Great job! Your best day ($${best}) is within the ${rule}% limit ($${maxAllowed.toFixed(0)}).`;
+            } else {
+                // FAIL
+                consResults.statusText.textContent = "VIOLATION";
+                consResults.statusText.className = "result-value val-red";
+                consResults.statusCard.style.borderColor = "var(--danger-color)";
+                consResults.statusCard.style.background = "rgba(248, 113, 113, 0.1)";
+
+                const neededTotal = best / (rule / 100);
+                const moreProfitNeeded = neededTotal - total;
+
+                consResults.feedback.innerHTML = `Violation! Best day ($${best}) is <strong>${currentPercent.toFixed(1)}%</strong> of profit. Limit is $${maxAllowed.toFixed(0)}.<br>You need <strong>$${moreProfitNeeded.toFixed(0)}</strong> more profit to pass.`;
+            }
+        }
+
+        // Run
+        init();
+
+    </script>
+</body>
+
+</html>
